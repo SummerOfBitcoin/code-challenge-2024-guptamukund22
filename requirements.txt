@@ -1,2 +1,5 @@
 pycryptodome
 ecdsa
+bech32
+binascii
+Crypto.Hash

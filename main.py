@@ -920,12 +920,17 @@ def return_id(transactions):
     return id,wid
 
 def merkle_root(txids: List[str]) -> str:
-    hashes = [bytes.fromhex(txid) for txid in txids]
+    # Convert each hex-encoded transaction ID into bytes and reverse to little-endian
+    hashes = [bytes.fromhex(txid)[::-1] for txid in txids]
+
     while len(hashes) > 1:
         if len(hashes) % 2 == 1:
-            hashes.append(hashes[-1])
+            hashes.append(hashes[-1])  # Duplicate the last hash if the number of hashes is odd
+        # Pair and hash each consecutive pair of transaction hashes
         hashes = [double_sha256(hashes[i] + hashes[i + 1]) for i in range(0, len(hashes), 2)]
-    return hashes[0].hex()
+
+    # Return the Merkle root in hex format, reversing back to big-endian for display
+    return hashes[0][::-1].hex() if hashes else ''
 
 def witness_commitment(txs):
     root = merkle_root(txs)
@@ -1007,6 +1012,7 @@ amount =  amount.to_bytes(8, byteorder='little').hex()
 tx_id , wid = return_id(best_transaction)
 coinbase_txn , coinbase_id = coinbase(wid)
 tx_id.insert(0,coinbase_id)
+print(tx_id)
 root = merkle_root(tx_id)
 block_header = create_block_header(root)
 output_content = f"{block_header}\n{coinbase_txn}\n" + "\n".join(tx_id)

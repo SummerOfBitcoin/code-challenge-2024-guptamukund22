@@ -976,7 +976,7 @@ def create_block_header(merkle_root):
     
     # Convert the given difficulty into bits (compact format)
     difficulty_target = '0000ffff00000000000000000000000000000000000000000000000000000000'
-    bits = 0xffff001f  # Compact format of the difficulty target
+    bits = 0x1f00ffff  # Compact format of the difficulty target
     
     merkle_root_bytes = bytes.fromhex(merkle_root)[::-1]  # Reverse to match little-endian
     timestamp = int(time.time())

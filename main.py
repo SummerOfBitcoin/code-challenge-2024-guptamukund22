@@ -901,7 +901,7 @@ def best_transactions_for_block(valid_transactions):
         temp.append(transaction)
     # Sort the transactions by the fee in descending order
     sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
-    sorted_transactions = sorted_transactions[0:4000]
+    sorted_transactions = sorted_transactions[0:3500]
     # Select transactions for the block based on the sorted order until the max block weight is reached
     for transaction in sorted_transactions:
             amount += transaction['fees']   
@@ -937,7 +937,7 @@ def witness_commitment(txs):
     reserved = '00' * 32  # 32 bytes of zero
     return double_sha256(bytes.fromhex(root + reserved)).hex()
 
-def coinbase(txs):
+def coinbase(txs,amount):
     tx = bytearray()
     tx.extend(b'\x01\x00\x00\x00') # Version
     tx.extend(b'\x00') # Marker
@@ -952,7 +952,7 @@ def coinbase(txs):
     tx.extend(b'\x02') # Num Outputs
 
     # First Output
-    tx.extend(bytes.fromhex('28a0d11500000000')) # Amount 1
+    tx.extend(bytes.fromhex(amount)) # Amount 1
     tx.extend(b'\x19') # Txout Script Len
     tx.extend(bytes.fromhex('76a914edf10a7fac6b32e24daa5305c723f3ee58db1bc888ac')) # ScriptPubKey
 
@@ -1010,7 +1010,7 @@ amount += SUBSIDY
 amount = int(amount)
 amount =  amount.to_bytes(8, byteorder='little').hex()
 tx_id , wid = return_id(best_transaction)
-coinbase_txn , coinbase_id = coinbase(wid)
+coinbase_txn , coinbase_id = coinbase(wid,amount)
 tx_id.insert(0,coinbase_id)
 root = merkle_root(tx_id)
 block_header = create_block_header(root)

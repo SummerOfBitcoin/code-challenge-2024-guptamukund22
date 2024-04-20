@@ -944,7 +944,9 @@ def coinbase(txs):
     tx.extend(b'\x01') # Num Inputs
     tx.extend(b'\x00' * 32) # Prev Tx Hash
     tx.extend(b'\xff\xff\xff\xff') # Prev Txout Index
-    tx.extend(b'\x00') # Txin Script Len
+    scriptsig_bytes = bytes.fromhex('03233708184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100')
+    tx.extend(struct.pack('<B', len(scriptsig_bytes))) # Txin Script Len (1 byte, VarInt)
+    tx.extend(scriptsig_bytes) # ScriptSig
     tx.extend(b'\xff\xff\xff\xff') # Sequence
     tx.extend(b'\x02') # Num Outputs
 
@@ -966,10 +968,9 @@ def coinbase(txs):
     txid = double_sha256(tx)
     return tx.hex(), txid[::-1].hex()
 
-
 def create_block_header(merkle_root):
-    version = 0x20000000  # Version 00000020
-    prev_block_hash = '00' * 32 # 32-byte value with 0x64 at the start
+    version = 0x00000004  # Version 00000020
+    prev_block_hash = '00' * 32 
     prev_block_hash_bytes = bytes.fromhex(prev_block_hash)  # No need to reverse as it's already in little-endian
     
     # Convert the given difficulty into bits (compact format)

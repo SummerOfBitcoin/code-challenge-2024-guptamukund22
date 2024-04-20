@@ -969,7 +969,7 @@ def coinbase(txs):
 
 def create_block_header(merkle_root):
     version = 0x20000000  # Version 00000020
-    prev_block_hash = '64' + '00' * 31  # 32-byte value with 0x64 at the start
+    prev_block_hash = '00' * 32 # 32-byte value with 0x64 at the start
     prev_block_hash_bytes = bytes.fromhex(prev_block_hash)  # No need to reverse as it's already in little-endian
     
     # Convert the given difficulty into bits (compact format)

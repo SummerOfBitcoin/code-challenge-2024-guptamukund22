@@ -898,7 +898,7 @@ def best_transactions_for_block(valid_transactions):
         temp.append(transaction)
     # Sort the transactions by the fee in descending order
     sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
-    sorted_transactions = sorted_transactions[0:50]        
+    sorted_transactions = sorted_transactions[0:20]        
     # Select transactions for the block based on the sorted order until the max block weight is reached
     for transaction in sorted_transactions:
             amount += transaction['fees']   
@@ -1017,7 +1017,6 @@ best_transaction , amount = best_transactions_for_block(transactions)
 amount =  amount.to_bytes(8, byteorder='little').hex()
 tx_id , wid = return_id(best_transaction)
 coinbase_txn , coinbase_id = coinbase(wid,amount)
-print(coinbase_txn)
 tx_id.insert(0,coinbase_id)
 root = merkle_root(tx_id)
 block_header = create_block_header(root)
@@ -1027,5 +1026,5 @@ output_file_path = 'output.txt'  # Using the mounted directory to save the file
 with open(output_file_path, 'w') as file:
      file.write(output_content)
 
-#010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff2503233708184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff02cb7b8b00000000001976a914edf10a7fac6b32e24daa5305c723f3ee58db1bc888ac0000000000000000266a24aa21a9edc950ca19a7552555846465b57872e2ea2ed4cbbff52f9f6a99f70bf8054751ff0120000000000000000000000000000000000000000000000000000000000000000000000000
-#010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff2503233708184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff02f595814a000000001976a914edf10a7fac6b32e24daa5305c723f3de58db1bc888ac0000000000000000266a24aa21a9edfaa194df59043645ba0f58aad74bfd5693fa497093174d12a4bb3b0574a878db0120000000000000000000000000000000000000000000000000000000000000000000000000
+#6a24aa21a9edfaa194df59043645ba0f58aad74bfd5693fa497093174d12a4bb3b0574a878db
+#6a24aa21a9edc950ca19a7552555846465b57872e2ea2ed4cbbff52f9f6a99f70bf8054751ff

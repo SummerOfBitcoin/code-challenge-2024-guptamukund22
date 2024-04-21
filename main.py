@@ -646,8 +646,6 @@ def compute_sighash_p2sh_p2wpkh(transaction, input_index, input_amount):
     sighash = hashlib.sha256(preimage).digest()
     return sighash.hex()
 
-
-
 def verify_p2sh_transaction(vin,transaction,index):
     scriptSig = vin['scriptsig']
     scriptPubKey = vin['prevout']['scriptpubkey']
@@ -900,7 +898,7 @@ def best_transactions_for_block(valid_transactions):
         temp.append(transaction)
     # Sort the transactions by the fee in descending order
     sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
-    sorted_transactions = sorted_transactions[0:20]        
+    sorted_transactions = sorted_transactions[0:50]        
     # Select transactions for the block based on the sorted order until the max block weight is reached
     for transaction in sorted_transactions:
             amount += transaction['fees']   
@@ -930,7 +928,7 @@ def merkle_root(txids: List[str]) -> str:
         hashes = [double_sha256(hashes[i] + hashes[i + 1]) for i in range(0, len(hashes), 2)]
 
     # Return the Merkle root in hex format, reversing back to big-endian for display
-    return hashes[0][::-1].hex() if hashes else ''
+    return hashes[0][::-1].hex()
 
 def convert_big_to_little_endian(hex_str):
     # Convert hex string to bytes
@@ -1016,11 +1014,10 @@ SUBSIDY = 3.125 * 100000000
 
 transactions = process_mempool()
 best_transaction , amount = best_transactions_for_block(transactions)
-amount += SUBSIDY
-amount = int(amount)
 amount =  amount.to_bytes(8, byteorder='little').hex()
 tx_id , wid = return_id(best_transaction)
 coinbase_txn , coinbase_id = coinbase(wid,amount)
+print(coinbase_txn)
 tx_id.insert(0,coinbase_id)
 root = merkle_root(tx_id)
 block_header = create_block_header(root)
@@ -1029,3 +1026,6 @@ output_content = f"{block_header}\n{coinbase_txn}\n" + "\n".join(tx_id)
 output_file_path = 'output.txt'  # Using the mounted directory to save the file
 with open(output_file_path, 'w') as file:
      file.write(output_content)
+
+#010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff2503233708184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff02cb7b8b00000000001976a914edf10a7fac6b32e24daa5305c723f3ee58db1bc888ac0000000000000000266a24aa21a9edc950ca19a7552555846465b57872e2ea2ed4cbbff52f9f6a99f70bf8054751ff0120000000000000000000000000000000000000000000000000000000000000000000000000
+#010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff2503233708184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff02f595814a000000001976a914edf10a7fac6b32e24daa5305c723f3de58db1bc888ac0000000000000000266a24aa21a9edfaa194df59043645ba0f58aad74bfd5693fa497093174d12a4bb3b0574a878db0120000000000000000000000000000000000000000000000000000000000000000000000000

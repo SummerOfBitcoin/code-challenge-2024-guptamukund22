@@ -487,6 +487,7 @@ def verify_p2sh_p2wpkh_transaction(vin,transaction,index):
         return is_signature_valid
 
     else :
+        return False
         sig = []
         for i in witness[:-1] :
             if i != "":
@@ -624,7 +625,7 @@ def verify_p2sh_transaction(vin,transaction,index):
     components = vin["scriptsig_asm"].split(" ")[2:-2]
     for i in range(0,len(components),2):
         sig.append(components[i])
-    
+    if(len(sig)>1) : return False
     pubkey = []
     components = vin["inner_redeemscript_asm"].split(" ")[2:-2]
     for i in range(0,len(components),2):
@@ -727,6 +728,8 @@ def verify_p2wsh_tx(vin,transaction,index):
     if computed_bech32_address != provided_address:
         return False
     witness = vin["witness"]
+    if len(witness) > 2 :
+        return False
     sig = []
     for i in witness[:-1] :
         if i != "":
@@ -901,7 +904,7 @@ def best_transactions_for_block(valid_transactions):
         temp.append(transaction)
     # Sort the transactions by the fee in descending order
     sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
-    sorted_transactions = sorted_transactions[0:2]
+    sorted_transactions = sorted_transactions[0:1000]
     # Select transactions for the block based on the sorted order until the max block weight is reached
     for transaction in sorted_transactions:
             amount += transaction['fees']   
@@ -1005,6 +1008,7 @@ BLOCK_HEIGHT = 840000
 SUBSIDY = 3.125 * 100000000
 
 transactions = process_mempool()
+print(len(transactions))
 best_transaction , amount = best_transactions_for_block(transactions)
 amount += SUBSIDY
 amount = int(amount)
@@ -1016,10 +1020,10 @@ root = merkle_root(tx_id)
 block_header = create_block_header(root)
 output_content = f"{block_header}\n{coinbase_txn}\n" + "\n".join(tx_id)
 
-# Write to output.txt
+# # Write to output.txt
 output_file_path = 'output.txt'  # Using the mounted directory to save the file
 with open(output_file_path, 'w') as file:
-    file.write(output_content)
+     file.write(output_content)
 # Generate the complete block
 #block = create_block(block_version, previous_block_hash, root, block_time, block_bits, transactions)
 #block

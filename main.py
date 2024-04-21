@@ -955,9 +955,7 @@ def coinbase(txs,amount):
     tx.extend(b'\x01') # Num Inputs
     tx.extend(b'\x00' * 32) # Prev Tx Hash
     tx.extend(b'\xff\xff\xff\xff') # Prev Txout Index
-    scriptsig_bytes = bytes.fromhex('03233708184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100')
-    tx.extend(struct.pack('<B', len(scriptsig_bytes))) # Txin Script Len (1 byte, VarInt)
-    tx.extend(scriptsig_bytes) # ScriptSig
+    tx.extend(b'\x00')
     tx.extend(b'\xff\xff\xff\xff') # Sequence
     tx.extend(b'\x02') # Num Outputs
 

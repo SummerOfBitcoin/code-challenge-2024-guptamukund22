@@ -905,10 +905,20 @@ def merkle_root(txids: List[str]) -> str:
     # Return the Merkle root in hex format, reversing back to big-endian for display
     return hashes[0][::-1].hex() if hashes else ''
 
+def convert_big_to_little_endian(hex_str):
+    # Convert hex string to bytes
+    hex_bytes = bytes.fromhex(hex_str)
+    # Reverse the byte order
+    hex_bytes_reversed = hex_bytes[::-1]
+    # Convert bytes back to hex
+    little_endian_hex = hex_bytes_reversed.hex()
+    return little_endian_hex
+
 def witness_commitment(txs):
     root = merkle_root(txs)
+    root = convert_big_to_little_endian(root)
     reserved = '00' * 32  # 32 bytes of zero
-    return double_sha256(bytes.fromhex(root + reserved)).hex()
+    return double_sha256(bytes.fromhex(root[::-1]+ reserved)).hex()
 
 def coinbase(txs,amount):
     tx = bytearray()

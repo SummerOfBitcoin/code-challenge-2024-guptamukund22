@@ -487,7 +487,6 @@ def verify_p2sh_p2wpkh_transaction(vin,transaction,index):
         return is_signature_valid
 
     else :
-        return False
         sig = []
         for i in witness[:-1] :
             if i != "":
@@ -625,7 +624,7 @@ def verify_p2sh_transaction(vin,transaction,index):
     components = vin["scriptsig_asm"].split(" ")[2:-2]
     for i in range(0,len(components),2):
         sig.append(components[i])
-    if(len(sig)>1) : return False
+    
     pubkey = []
     components = vin["inner_redeemscript_asm"].split(" ")[2:-2]
     for i in range(0,len(components),2):
@@ -728,8 +727,6 @@ def verify_p2wsh_tx(vin,transaction,index):
     if computed_bech32_address != provided_address:
         return False
     witness = vin["witness"]
-    if len(witness) > 2 :
-        return False
     sig = []
     for i in witness[:-1] :
         if i != "":
@@ -780,101 +777,74 @@ def calculate_transaction_weight(tx):
     non_witness_bytes = 0
     witness_bytes = 0
 
-    tx_type = "SEGWIT" if any('witness' in vin for vin in tx['vin']) else "LEGACY"
-
-    if tx_type == "LEGACY":
+    if is_legacy_transaction(tx):
         # VERSION
         non_witness_bytes += 4
-
         if len(tx['vin']) >= 50:
-            raise ValueError("Too many inputs")
-
+            return False
         # INPUT COUNT
         non_witness_bytes += 1
-
         # INPUTS
         for input in tx['vin']:
             # TXID
             txid = bytes.fromhex(input['txid'])
             non_witness_bytes += 32
-
             # VOUT
             non_witness_bytes += 4
-
             # SCRIPTSIG
             script_sig = bytes.fromhex(input.get('scriptsig', ''))
             non_witness_bytes += 1 + len(script_sig)
-
             # SEQUENCE
             non_witness_bytes += 4
-
         if len(tx['vout']) >= 50:
-            raise ValueError("Too many outputs")
-
+            return False
         # OUTPUT COUNT
         non_witness_bytes += 1
-
         # OUTPUTS
         for output in tx['vout']:
             # VALUE
             non_witness_bytes += 8
-
             # SCRIPTPUBKEY
             scriptpubkey = bytes.fromhex(output['scriptpubkey'])
             non_witness_bytes += 1 + len(scriptpubkey)
-
         # LOCKTIME
         non_witness_bytes += 4
-
     else:
         # VERSION
         non_witness_bytes += 4
-
         # MARKER and FLAG (witness data)
         witness_bytes += 2
-
         if len(tx['vin']) >= 50:
-            raise ValueError("Too many inputs")
-
+            return False
         # INPUT COUNT
         non_witness_bytes += 1
-
         # INPUTS
         for input in tx['vin']:
             # TXID and VOUT
             non_witness_bytes += 32 + 4
-
             # SCRIPTSIG (if any)
             script_sig = bytes.fromhex(input.get('scriptsig', ''))
             non_witness_bytes += 1 + len(script_sig)
-
             # SEQUENCE
             non_witness_bytes += 4
-
         if len(tx['vout']) >= 255:
-            raise ValueError("Too many outputs")
-
+            return False
         # OUTPUT COUNT
         non_witness_bytes += 1
-
         # OUTPUTS
         for output in tx['vout']:
             # VALUE and SCRIPTPUBKEY
             non_witness_bytes += 8 + 1 + len(bytes.fromhex(output['scriptpubkey']))
-
         # WITNESS DATA
         for input in tx['vin']:
             witness = input.get('witness', [])
             for item in witness:
                 item_bytes = bytes.fromhex(item)
                 witness_bytes += 1 + len(item_bytes)
-
         # LOCKTIME
         non_witness_bytes += 4
-
     # Calculate the total weight of the transaction
     tx_weight = (non_witness_bytes * 4) + witness_bytes
-
     # Return the transaction weight
     return tx_weight
 
@@ -904,7 +874,7 @@ def best_transactions_for_block(valid_transactions):
         temp.append(transaction)
     # Sort the transactions by the fee in descending order
     sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
-    sorted_transactions = sorted_transactions[0:1000]
+    sorted_transactions = sorted_transactions[0:20]        
     # Select transactions for the block based on the sorted order until the max block weight is reached
     for transaction in sorted_transactions:
             amount += transaction['fees']   
@@ -1008,22 +978,21 @@ BLOCK_HEIGHT = 840000
 SUBSIDY = 3.125 * 100000000
 
 transactions = process_mempool()
-print(len(transactions))
 best_transaction , amount = best_transactions_for_block(transactions)
-amount += SUBSIDY
-amount = int(amount)
-amount =  amount.to_bytes(8, byteorder='little').hex()
-tx_id , wid = return_id(best_transaction)
-coinbase_txn , coinbase_id = coinbase(wid,amount)
-tx_id.insert(0,coinbase_id)
-root = merkle_root(tx_id)
-block_header = create_block_header(root)
-output_content = f"{block_header}\n{coinbase_txn}\n" + "\n".join(tx_id)
+# amount += SUBSIDY
+# amount = int(amount)
+# amount =  amount.to_bytes(8, byteorder='little').hex()
+# tx_id , wid = return_id(best_transaction)
+# coinbase_txn , coinbase_id = coinbase(wid,amount)
+# tx_id.insert(0,coinbase_id)
+# root = merkle_root(tx_id)
+# block_header = create_block_header(root)
+# output_content = f"{block_header}\n{coinbase_txn}\n" + "\n".join(tx_id)
 
 # # Write to output.txt
-output_file_path = 'output.txt'  # Using the mounted directory to save the file
-with open(output_file_path, 'w') as file:
-     file.write(output_content)
+# output_file_path = 'output.txt'  # Using the mounted directory to save the file
+# with open(output_file_path, 'w') as file:
+#     file.write(output_content)
 # Generate the complete block
 #block = create_block(block_version, previous_block_hash, root, block_time, block_bits, transactions)
 #block

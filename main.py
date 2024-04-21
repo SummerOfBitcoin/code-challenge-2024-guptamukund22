@@ -881,15 +881,68 @@ def best_transactions_for_block(valid_transactions):
     # Return the selected transactions for the block
     return sorted_transactions,amount
 
+def wid_id(tx):
+    serialized_tx = bytearray()
+
+    # Version
+    serialized_tx.extend(struct.pack('<I', tx['version']))
+
+    # Marker and Flag (only if there is at least one witness)
+    if any('witness' in vin for vin in tx['vin']):
+        serialized_tx.extend(b'\x00\x01')
+
+    # Number of inputs, using VarInt
+    serialized_tx.extend(serialize_varint(len(tx['vin'])))
+
+    # Inputs
+    for vin in tx['vin']:
+        # TXID
+        serialized_tx.extend(bytes.fromhex(vin['txid'])[::-1])
+        # VOUT
+        serialized_tx.extend(struct.pack('<I', vin['vout']))
+        # ScriptSig (empty for segwit inputs initially)
+        serialized_tx.extend(serialize_varint(0))
+        # Sequence
+        serialized_tx.extend(struct.pack('<I', vin['sequence']))
+    
+    # Outputs
+    serialized_tx.extend(serialize_varint(len(tx['vout'])))
+    for vout in tx['vout']:
+        # Value
+        serialized_tx.extend(struct.pack('<Q', vout['value']))
+        # ScriptPubKey
+        scriptpubkey_bytes = bytes.fromhex(vout['scriptpubkey'])
+        serialized_tx.extend(serialize_varint(len(scriptpubkey_bytes)))
+        serialized_tx.extend(scriptpubkey_bytes)
+
+    # Witness data
+    if any('witness' in vin for vin in tx['vin']):
+        for vin in tx['vin']:
+            if 'witness' in vin:
+                # Number of witness elements
+                serialized_tx.extend(serialize_varint(len(vin['witness'])))
+                for witness in vin['witness']:
+                    witness_bytes = bytes.fromhex(witness)
+                    serialized_tx.extend(serialize_varint(len(witness_bytes)))
+                    serialized_tx.extend(witness_bytes)
+
+    # Locktime
+    serialized_tx.extend(struct.pack('<I', tx['locktime']))
+
+    # Compute wTxID
+    wtxid = double_sha256(serialized_tx)
+    return wtxid[::-1].hex()
+
 def return_id(transactions):
     id = []
     wid = []
     for tx in transactions:
         if is_legacy_transaction(tx):
             id.append(get_legacy_txid(tx))
+            wid.append(get_legacy_txid(tx))
         else:
             id.append(get_txid(tx))
-            wid.append(get_txid(tx))
+            wid.append(wid_id(tx))
     return id,wid
 
 def merkle_root(txids: List[str]) -> str:

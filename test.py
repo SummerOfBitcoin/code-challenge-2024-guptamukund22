@@ -11,7 +11,6 @@ import time
 
 def double_sha256(s):
     return hashlib.sha256(hashlib.sha256(s).digest()).digest()
-
 def merkle_root(txids: List[str]) -> str:
     # Convert each hex-encoded transaction ID into bytes and reverse to little-endian
     hashes = [bytes.fromhex(txid)[::-1] for txid in txids]
@@ -38,8 +37,7 @@ def witness_commitment(txs):
     root = merkle_root(txs)
     root = convert_big_to_little_endian(root)
     reserved = '00' * 32  # 32 bytes of zero
-    print(root + reserved)
-    return double_sha256(bytes.fromhex(root + reserved)).hex()
+    return double_sha256(bytes.fromhex(root+ reserved)).hex()
 
 def coinbase(txs,amount):
     tx = bytearray()
@@ -61,8 +59,8 @@ def coinbase(txs,amount):
     tx.extend(bytes.fromhex('76a914edf10a7fac6b32e24daa5305c723f3ee58db1bc888ac')) # ScriptPubKey
     txs.insert(0,"0000000000000000000000000000000000000000000000000000000000000000")
     # Second Output
-    tx.extend(bytes.fromhex('0000000000000000')) # Amount 2
     print(witness_commitment(txs))
+    tx.extend(bytes.fromhex('0000000000000000')) # Amount 2
     script = bytes.fromhex('6a24aa21a9ed') + bytes.fromhex(witness_commitment(txs))
     tx.extend(len(script).to_bytes(1, 'big')) # Txout Script Len
     tx.extend(script) # Script

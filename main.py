@@ -918,7 +918,7 @@ def witness_commitment(txs):
     root = merkle_root(txs)
     root = convert_big_to_little_endian(root)
     reserved = '00' * 32  # 32 bytes of zero
-    return double_sha256(bytes.fromhex(root[::-1]+ reserved)).hex()
+    return double_sha256(bytes.fromhex(root+ reserved)).hex()
 
 def coinbase(txs,amount):
     tx = bytearray()

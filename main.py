@@ -928,7 +928,7 @@ def coinbase(txs,amount):
     tx.extend(bytes.fromhex(amount)) # Amount 1
     tx.extend(b'\x19') # Txout Script Len
     tx.extend(bytes.fromhex('76a914edf10a7fac6b32e24daa5305c723f3ee58db1bc888ac')) # ScriptPubKey
-
+    txs.insert(0,"0000000000000000000000000000000000000000000000000000000000000000")
     # Second Output
     tx.extend(bytes.fromhex('0000000000000000')) # Amount 2
     script = bytes.fromhex('6a24aa21a9ed') + bytes.fromhex(witness_commitment(txs))

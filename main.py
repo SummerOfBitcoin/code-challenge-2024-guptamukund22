@@ -979,20 +979,20 @@ SUBSIDY = 3.125 * 100000000
 
 transactions = process_mempool()
 best_transaction , amount = best_transactions_for_block(transactions)
-# amount += SUBSIDY
-# amount = int(amount)
-# amount =  amount.to_bytes(8, byteorder='little').hex()
-# tx_id , wid = return_id(best_transaction)
-# coinbase_txn , coinbase_id = coinbase(wid,amount)
-# tx_id.insert(0,coinbase_id)
-# root = merkle_root(tx_id)
-# block_header = create_block_header(root)
-# output_content = f"{block_header}\n{coinbase_txn}\n" + "\n".join(tx_id)
+amount += SUBSIDY
+amount = int(amount)
+amount =  amount.to_bytes(8, byteorder='little').hex()
+tx_id , wid = return_id(best_transaction)
+coinbase_txn , coinbase_id = coinbase(wid,amount)
+tx_id.insert(0,coinbase_id)
+root = merkle_root(tx_id)
+block_header = create_block_header(root)
+output_content = f"{block_header}\n{coinbase_txn}\n" + "\n".join(tx_id)
 
 # # Write to output.txt
-# output_file_path = 'output.txt'  # Using the mounted directory to save the file
-# with open(output_file_path, 'w') as file:
-#     file.write(output_content)
+output_file_path = 'output.txt'  # Using the mounted directory to save the file
+with open(output_file_path, 'w') as file:
+     file.write(output_content)
 # Generate the complete block
 #block = create_block(block_version, previous_block_hash, root, block_time, block_bits, transactions)
 #block

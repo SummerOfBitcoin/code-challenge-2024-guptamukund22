@@ -170,6 +170,58 @@ def serialize_tx(tx):
     
     return bytes(serialized_tx)
 
+def wid_id(tx):
+    serialized_tx = bytearray()
+
+    # Version
+    serialized_tx.extend(int(tx['version']).to_bytes(4, byteorder='little'))
+
+    # Marker and Flag (only if there is at least one witness)
+    if any('witness' in vin for vin in tx['vin']):
+        serialized_tx.extend(b'\x00\x01')
+
+    # Number of inputs, using VarInt
+    serialized_tx.extend(serialize_varint(len(tx['vin'])))
+
+    # Inputs
+    for vin in tx['vin']:
+        # TXID
+        serialized_tx.extend(bytes.fromhex(vin['txid'])[::-1])
+        # VOUT
+        serialized_tx.extend(int(vin['vout']).to_bytes(4, byteorder='little'))
+        # ScriptSig (empty for segwit inputs initially)
+        serialized_tx.extend(serialize_varint(0))
+        # Sequence
+        serialized_tx.extend(int(vin['sequence']).to_bytes(4, byteorder='little'))
+    
+    # Outputs
+    serialized_tx.extend(serialize_varint(len(tx['vout'])))
+    for vout in tx['vout']:
+        # Value
+        serialized_tx.extend(int(vout['value']).to_bytes(8, byteorder='little'))
+        # ScriptPubKey
+        scriptpubkey_bytes = bytes.fromhex(vout['scriptpubkey'])
+        serialized_tx.extend(serialize_varint(len(scriptpubkey_bytes)))
+        serialized_tx.extend(scriptpubkey_bytes)
+
+    # Witness data
+    if any('witness' in vin for vin in tx['vin']):
+        for vin in tx['vin']:
+            if 'witness' in vin:
+                # Number of witness elements
+                serialized_tx.extend(serialize_varint(len(vin['witness'])))
+                for witness in vin['witness']:
+                    witness_bytes = bytes.fromhex(witness)
+                    serialized_tx.extend(serialize_varint(len(witness_bytes)))
+                    serialized_tx.extend(witness_bytes)
+
+    # Locktime
+    serialized_tx.extend(struct.pack('<I', tx['locktime']))
+
+    # Compute wTxID
+    wtxid = double_sha256(serialized_tx)
+    return wtxid.hex()
+
 def double_sha256(s):
     return hashlib.sha256(hashlib.sha256(s).digest()).digest()
 
@@ -747,32 +799,6 @@ def verify_p2wsh_tx(vin,transaction,index):
     if(j==len(sig)): return True
     return False
 
-
-# def classify_transactions_by_prevout_script(mempool_dir):
-#     script_types_count = {}
-#     print(len(os.listdir(mempool_dir)))
-#     # Iterate through each file in the mempool directory
-#     for filename in os.listdir(mempool_dir):
-#         filepath = os.path.join(mempool_dir, filename)
-        
-#         # Open and load the JSON transaction file
-#         with open(filepath, 'r') as file:
-#             transaction = json.load(file)
-            
-#             # Iterate through each input in the transaction
-#             for vin in transaction.get('vin', []):
-#                 # Extract the scriptpubkey_type from the prevout section
-#                 script_type = vin.get('prevout', {}).get('scriptpubkey_type', 'Unknown')
-                
-#                 # If the script type is not in our dictionary, add it with a starting count of 0
-#                 if script_type not in script_types_count:
-#                     script_types_count[script_type] = 0
-                
-#                 # Increment the count for this script type
-#                 script_types_count[script_type] += 1
-
-#     return script_types_count
-
 def calculate_transaction_weight(tx):
     non_witness_bytes = 0
     witness_bytes = 0
@@ -880,58 +906,6 @@ def best_transactions_for_block(valid_transactions):
             amount += transaction['fees']   
     # Return the selected transactions for the block
     return sorted_transactions,amount
-
-def wid_id(tx):
-    serialized_tx = bytearray()
-
-    # Version
-    serialized_tx.extend(struct.pack('<I', tx['version']))
-
-    # Marker and Flag (only if there is at least one witness)
-    if any('witness' in vin for vin in tx['vin']):
-        serialized_tx.extend(b'\x00\x01')
-
-    # Number of inputs, using VarInt
-    serialized_tx.extend(serialize_varint(len(tx['vin'])))
-
-    # Inputs
-    for vin in tx['vin']:
-        # TXID
-        serialized_tx.extend(bytes.fromhex(vin['txid'])[::-1])
-        # VOUT
-        serialized_tx.extend(struct.pack('<I', vin['vout']))
-        # ScriptSig (empty for segwit inputs initially)
-        serialized_tx.extend(serialize_varint(0))
-        # Sequence
-        serialized_tx.extend(struct.pack('<I', vin['sequence']))
-    
-    # Outputs
-    serialized_tx.extend(serialize_varint(len(tx['vout'])))
-    for vout in tx['vout']:
-        # Value
-        serialized_tx.extend(struct.pack('<Q', vout['value']))
-        # ScriptPubKey
-        scriptpubkey_bytes = bytes.fromhex(vout['scriptpubkey'])
-        serialized_tx.extend(serialize_varint(len(scriptpubkey_bytes)))
-        serialized_tx.extend(scriptpubkey_bytes)
-
-    # Witness data
-    if any('witness' in vin for vin in tx['vin']):
-        for vin in tx['vin']:
-            if 'witness' in vin:
-                # Number of witness elements
-                serialized_tx.extend(serialize_varint(len(vin['witness'])))
-                for witness in vin['witness']:
-                    witness_bytes = bytes.fromhex(witness)
-                    serialized_tx.extend(serialize_varint(len(witness_bytes)))
-                    serialized_tx.extend(witness_bytes)
-
-    # Locktime
-    serialized_tx.extend(struct.pack('<I', tx['locktime']))
-
-    # Compute wTxID
-    wtxid = double_sha256(serialized_tx)
-    return wtxid[::-1].hex()
 
 def return_id(transactions):
     id = []
@@ -1051,11 +1025,7 @@ tx_id.insert(0,coinbase_id)
 root = merkle_root(tx_id)
 block_header = create_block_header(root)
 output_content = f"{block_header}\n{coinbase_txn}\n" + "\n".join(tx_id)
-
 # # Write to output.txt
 output_file_path = 'output.txt'  # Using the mounted directory to save the file
 with open(output_file_path, 'w') as file:
      file.write(output_content)
-# Generate the complete block
-#block = create_block(block_version, previous_block_hash, root, block_time, block_bits, transactions)
-#block

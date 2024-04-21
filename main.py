@@ -217,10 +217,9 @@ def wid_id(tx):
 
     # Locktime
     serialized_tx.extend(struct.pack('<I', tx['locktime']))
-
     # Compute wTxID
     wtxid = double_sha256(serialized_tx)
-    return wtxid.hex()
+    return wtxid[::-1].hex()
 
 def double_sha256(s):
     return hashlib.sha256(hashlib.sha256(s).digest()).digest()

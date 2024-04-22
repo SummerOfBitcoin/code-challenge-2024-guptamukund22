@@ -899,7 +899,7 @@ def best_transactions_for_block(valid_transactions):
         temp.append(transaction)
     # Sort the transactions by the fee in descending order
     #sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
-    sorted_transactions = valid_transactions[0:2000]        
+    sorted_transactions = valid_transactions[0:2500]        
     # Select transactions for the block based on the sorted order until the max block weight is reached
     for transaction in sorted_transactions:
             amount += transaction['fees']   
@@ -1026,6 +1026,7 @@ output_content = f"{block_header}\n{coinbase_txn}\n" + "\n".join(tx_id)
 output_file_path = 'output.txt'  # Using the mounted directory to save the file
 with open(output_file_path, 'w') as file:
      file.write(output_content)
+
 
 #6a24aa21a9edfaa194df59043645ba0f58aad74bfd5693fa497093174d12a4bb3b0574a878db
 #6a24aa21a9edc950ca19a7552555846465b57872e2ea2ed4cbbff52f9f6a99f70bf8054751ff

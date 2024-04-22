@@ -898,8 +898,8 @@ def best_transactions_for_block(valid_transactions):
         transaction['fees'] = fees
         temp.append(transaction)
     # Sort the transactions by the fee in descending order
-    sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
-    sorted_transactions = sorted_transactions[0:2000]        
+    #sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
+    sorted_transactions = valid_transactions[0:2200]        
     # Select transactions for the block based on the sorted order until the max block weight is reached
     for transaction in sorted_transactions:
             amount += transaction['fees']   

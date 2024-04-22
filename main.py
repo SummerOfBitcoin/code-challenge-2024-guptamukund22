@@ -45,10 +45,12 @@ def validate_locktime(transaction):
 #function to return valid transactions from the mempol 
 def process_mempool():
     valid_transactions = []
-    for filename in os.listdir(MEMPOOL_DIR):
-        filepath = os.path.join(MEMPOOL_DIR, filename) 
-        with open(filepath, 'r') as file:
-            transaction = json.load(file)
+    # for filename in os.listdir(MEMPOOL_DIR):
+    #     filepath = os.path.join(MEMPOOL_DIR, filename) 
+    #     with open(filepath, 'r') as file:
+    with open('valid-cache.json', 'r') as file:
+        transactions = json.load(file)
+    for transaction in transactions:
             if (validate_locktime(transaction) and validate_transaction_fields(transaction)):
                 valid = 1
                 for index,vin in enumerate(transaction['vin']):
@@ -896,8 +898,8 @@ def best_transactions_for_block(valid_transactions):
         transaction['fees'] = fees
         temp.append(transaction)
     # Sort the transactions by the fee in descending order
-    sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
-    sorted_transactions = sorted_transactions[0:20]        
+    #sorted_transactions = sorted(temp, key=lambda x: x['fees'], reverse=True)
+    sorted_transactions = valid_transactions[0:2000]        
     # Select transactions for the block based on the sorted order until the max block weight is reached
     for transaction in sorted_transactions:
             amount += transaction['fees']   
